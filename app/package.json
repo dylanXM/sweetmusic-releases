@@ -1,0 +1,65 @@
+{
+  "name": "sweetmusic",
+  "version": "1.0.1",
+  "description": "SweetMusic desktop shell — thin Electron wrapper for https://music.sweetai.work",
+  "main": "main.js",
+  "productName": "SweetMusic",
+  "author": "SweetAI",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "33.4.0",
+    "electron-builder": "24.13.3"
+  },
+  "build": {
+    "appId": "work.sweetai.sweetmusic",
+    "productName": "SweetMusic",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "package.json"
+    ],
+    "asar": true,
+    "mac": {
+      "category": "public.app-category.music",
+      "target": [
+        "dir"
+      ],
+      "identity": null
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "SweetMusic-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "SweetMusic-${version}-linux-${arch}.${ext}",
+      "category": "AudioVideo"
+    }
+  }
+}

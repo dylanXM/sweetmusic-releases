@@ -1,0 +1,111 @@
+name: Release desktop
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-mac:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        working-directory: app
+        run: npm ci --no-audit --no-fund
+      - name: Build unpacked apps (arm64 + x64)
+        working-directory: app
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+        run: |
+          npx electron-builder --mac dir --arm64
+          npx electron-builder --mac dir --x64
+      - name: Ad-hoc sign and zip
+        working-directory: app
+        run: |
+          set -euo pipefail
+          VER="${GITHUB_REF_NAME#v}"
+          mkdir -p ../release-assets
+          ARM_APP="dist/mac-arm64/SweetMusic.app"
+          X64_APP="dist/mac/SweetMusic.app"
+          if [ ! -d "$ARM_APP" ]; then ARM_APP="$(find dist -maxdepth 2 -type d -name 'SweetMusic.app' | grep -i arm | head -1)"; fi
+          if [ ! -d "$X64_APP" ]; then X64_APP="$(find dist -maxdepth 2 -type d -name 'SweetMusic.app' | grep -v -i arm | head -1)"; fi
+          echo "arm64 app: $ARM_APP"
+          echo "x64 app:   $X64_APP"
+          codesign --force --deep --sign - "$ARM_APP"
+          codesign --force --deep --sign - "$X64_APP"
+          codesign --verify --deep --strict --verbose=1 "$ARM_APP"
+          codesign --verify --deep --strict --verbose=1 "$X64_APP"
+          ditto -c -k --sequesterRsrc --keepParent "$ARM_APP" "../release-assets/SweetMusic-${VER}-mac-arm64.zip"
+          ditto -c -k --sequesterRsrc --keepParent "$X64_APP" "../release-assets/SweetMusic-${VER}-mac-x64.zip"
+          ls -la ../release-assets
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mac
+          path: release-assets/*.zip
+          if-no-files-found: error
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        working-directory: app
+        run: npm ci --no-audit --no-fund
+      - name: Build NSIS installer
+        working-directory: app
+        run: npx electron-builder --win nsis --x64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: app/dist/*.exe
+          if-no-files-found: error
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        working-directory: app
+        run: npm ci --no-audit --no-fund
+      - name: Build AppImage
+        working-directory: app
+        run: npx electron-builder --linux AppImage --x64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: app/dist/*.AppImage
+          if-no-files-found: error
+
+  release:
+    needs: [build-mac, build-windows, build-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: "*"
+          path: assets
+          merge-multiple: true
+      - name: List assets
+        run: ls -la assets
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "SweetMusic ${GITHUB_REF_NAME}" \
+            --notes "SweetMusic desktop ${GITHUB_REF_NAME}: GPU hardware acceleration restored (smooth animations), macOS builds ad-hoc signed, automatic update detection added (checks on launch, one-click download of new versions). Web app: https://music.sweetai.work" \
+            assets/*
