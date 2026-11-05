@@ -58,7 +58,7 @@
           ]
         }
       ],
-      "artifactName": "SweetMusic-${version}-linux-${arch}.${ext}",
+      "artifactName": "SweetMusic-${version}-linux-x64.${ext}",
       "category": "AudioVideo"
     }
   }
