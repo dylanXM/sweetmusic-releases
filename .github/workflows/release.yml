@@ -91,6 +91,9 @@ jobs:
 
   release:
     needs: [build-mac, build-windows, build-linux]
+    # Publish with whatever platforms built: a queued-then-cancelled
+    # macOS runner must not sink the Windows/Linux assets with it.
+    if: ${{ always() && needs.build-windows.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
