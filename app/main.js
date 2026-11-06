@@ -14,7 +14,7 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 
-const SITE = 'https://music.sweetai.work';
+const SITE = process.env.SM_SITE_URL || 'https://music.sweetai.work';
 const SITE_HOST = 'music.sweetai.work';
 const BASELINE = process.env.SM_BASELINE === '1';
 const SELFTEST = process.env.SM_SELFTEST === '1';
@@ -36,9 +36,13 @@ app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 // platform it runs on; version filled in once the app is ready.
 function chromeUA() {
   const v = process.versions.chrome || '130.0.0.0';
-  if (process.platform === 'darwin') return `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${v} Safari/537.36`;
-  if (process.platform === 'win32') return `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${v} Safari/537.36`;
-  return `Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${v} Safari/537.36`;
+  // The SweetMusicApp marker lets the web app switch on its
+  // shell-only chrome (drag regions, traffic-light / caption-button
+  // clearances) without affecting the plain browser experience.
+  const marker = ` SweetMusicApp/${app.getVersion()}`;
+  if (process.platform === 'darwin') return `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${v} Safari/537.36${marker}`;
+  if (process.platform === 'win32') return `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${v} Safari/537.36${marker}`;
+  return `Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${v} Safari/537.36${marker}`;
 }
 
 // ---- window bounds persistence -------------------------------------------
@@ -112,6 +116,19 @@ function createWindow() {
       nodeIntegration: false,
     },
   };
+  // Fused title bar (user directive 2026-11-06): no stock OS strip
+  // above the glass UI. macOS keeps its traffic lights, floated
+  // over the app's own top area (hiddenInset); Windows gets the
+  // native caption buttons drawn by the OS in the app's colors
+  // (titleBarOverlay). The web app supplies the drag regions and
+  // clearances when it sees the SweetMusicApp UA marker.
+  if (process.platform === 'darwin') {
+    opts.titleBarStyle = 'hiddenInset';
+    opts.trafficLightPosition = { x: 16, y: 16 };
+  } else if (process.platform === 'win32') {
+    opts.titleBarStyle = 'hidden';
+    opts.titleBarOverlay = { color: '#0b0b10', symbolColor: '#f4f2fa', height: 44 };
+  }
   if (!BASELINE) {
     opts.show = false;                    // no white flash; show on ready-to-show
     opts.backgroundColor = '#0b0b10';     // site dark base while loading

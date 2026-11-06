@@ -1,7 +1,7 @@
 {
   "name": "sweetmusic",
-  "version": "1.0.1",
-  "description": "SweetMusic desktop shell — thin Electron wrapper for https://music.sweetai.work",
+  "version": "1.0.2",
+  "description": "SweetMusic desktop shell \u2014 thin Electron wrapper for https://music.sweetai.work",
   "main": "main.js",
   "productName": "SweetMusic",
   "author": "SweetAI",

@@ -106,7 +106,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release delete "${GITHUB_REF_NAME}" --yes || true
-          gh release create "${GITHUB_REF_NAME}" \
+          PRERELEASE=""
+          case "${GITHUB_REF_NAME}" in *preview*) PRERELEASE="--prerelease" ;; esac
+          gh release create "${GITHUB_REF_NAME}" $PRERELEASE \
             --title "SweetMusic ${GITHUB_REF_NAME}" \
             --notes "SweetMusic desktop ${GITHUB_REF_NAME}: GPU hardware acceleration restored (smooth animations), macOS builds ad-hoc signed, automatic update detection added (checks on launch, one-click download of new versions). Web app: https://music.sweetai.work" \
             assets/*
