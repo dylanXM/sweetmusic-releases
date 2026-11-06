@@ -21,6 +21,7 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
+      - uses: android-actions/setup-android@v3
       - name: Install dependencies
         working-directory: android-app
         run: npm ci --no-audit --no-fund
@@ -29,7 +30,16 @@ jobs:
         run: npx cap sync android
       - name: Build debug APK
         working-directory: android-app/android
-        run: ./gradlew assembleDebug --no-daemon
+        run: ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee "$GITHUB_WORKSPACE/gradle-build.log"; test ${PIPESTATUS[0]} -eq 0
+      - name: Publish failure diagnostics
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "apk-diag-${GITHUB_RUN_ID}" --prerelease \
+            --title "APK build diagnostics ${GITHUB_RUN_ID}" \
+            --notes "Gradle log from a failed APK build (auto-published for diagnosis)." \
+            gradle-build.log || true
       - name: Collect APK
         run: |
           mkdir -p release-assets
