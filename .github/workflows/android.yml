@@ -41,6 +41,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          [ -f gradle-build.log ] || echo "build failed before the Gradle step; see the run's step list" > gradle-build.log
           gh release create "apk-diag-${GITHUB_RUN_ID}" --prerelease \
             --title "APK build diagnostics ${GITHUB_RUN_ID}" \
             --notes "Gradle log from a failed APK build (auto-published for diagnosis)." \
