@@ -1,0 +1,53 @@
+name: Build Android APK
+
+on:
+  push:
+    tags:
+      - "apk-v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Install dependencies
+        working-directory: android-app
+        run: npm ci --no-audit --no-fund
+      - name: Sync Capacitor
+        working-directory: android-app
+        run: npx cap sync android
+      - name: Build debug APK
+        working-directory: android-app/android
+        run: ./gradlew assembleDebug --no-daemon
+      - name: Collect APK
+        run: |
+          mkdir -p release-assets
+          cp android-app/android/app/build/outputs/apk/debug/app-debug.apk "release-assets/SweetMusic-${GITHUB_REF_NAME#apk-}.apk"
+          ls -la release-assets
+      - name: Publish prerelease with APK
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete "${GITHUB_REF_NAME}" --yes || true
+          gh release create "${GITHUB_REF_NAME}" --prerelease \
+            --title "SweetMusic Android ${GITHUB_REF_NAME}" \
+            --notes "SweetMusic Android shell (Capacitor, loads https://music.sweetai.work). Debug-signed APK for direct installation; store signing comes later." \
+            release-assets/*
+      - name: Upload artifact (manual runs)
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: sweetmusic-apk
+          path: release-assets/*

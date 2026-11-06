@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">SweetMusic</string>
+    <string name="title_activity_main">SweetMusic</string>
+    <string name="package_name">work.sweetai.music</string>
+    <string name="custom_url_scheme">work.sweetai.music</string>
+</resources>

@@ -1,0 +1,13 @@
+{
+  "name": "sweetmusic-android",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SweetMusic Android shell (Capacitor, loads the live web app)",
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/core": "^6.1.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.2"
+  }
+}

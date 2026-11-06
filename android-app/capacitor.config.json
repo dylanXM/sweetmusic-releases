@@ -1,0 +1,12 @@
+{
+  "appId": "work.sweetai.music",
+  "appName": "SweetMusic",
+  "webDir": "www",
+  "server": {
+    "url": "https://music.sweetai.work",
+    "cleartext": false
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}
