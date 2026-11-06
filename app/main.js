@@ -14,7 +14,7 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 
-const SITE = process.env.SM_SITE_URL || 'https://music.sweetai.work';
+const SITE = process.env.SM_SITE_URL || 'https://staging.libremusic.pages.dev'; // PREVIEW TIP ONLY - do not merge this commit to main
 const SITE_HOST = 'music.sweetai.work';
 const BASELINE = process.env.SM_BASELINE === '1';
 const SELFTEST = process.env.SM_SELFTEST === '1';
